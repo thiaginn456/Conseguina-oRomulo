@@ -1,0 +1,84 @@
+/* Injeta os estilos base, componentes e utilitários do Tailwind. */
+@tailwind base;
+/* Carrega os estilos de componentes do Tailwind. */
+@tailwind components;
+/* Carrega as classes utilitárias usadas pelos componentes. */
+@tailwind utilities;
+
+/* Define o fundo geral fora do body. */
+html {
+  background-color: #F7F8FA;
+}
+
+/* Define tipografia, cor padrão e fundo da aplicação. */
+body {
+  font-family: 'Montserrat', sans-serif;
+  color: #17212B;
+  background-color: #F7F8FA;
+}
+
+/* Usa a fonte de destaque nos títulos e elementos marcados. */
+h1, h2, h3, h4, .font-display {
+  font-family: 'Poppins', sans-serif;
+}
+
+/* ---- Notinha: some da tela normal, só aparece ao imprimir ---- */
+/* Esconde a aplicação e mostra somente a notinha ao imprimir. */
+@media print {
+  @page {
+    margin: 8mm;
+  }
+  body * {
+    visibility: hidden;
+  }
+  #notinha-print, #notinha-print * {
+    visibility: visible;
+  }
+  #notinha-print {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Ajusta a largura e os tamanhos para bobina térmica de 80 mm. */
+@media print {
+  body.thermal-print {
+    width: 80mm;
+  }
+
+  body.thermal-print #notinha-print {
+    width: 72mm;
+    padding: 0;
+    font-size: 11px;
+  }
+
+  body.thermal-print #notinha-print h2 {
+    font-size: 15px;
+  }
+
+  body.thermal-print #notinha-print table {
+    font-size: 10px;
+  }
+
+  body.thermal-print #notinha-print th,
+  body.thermal-print #notinha-print td {
+    padding-top: 2px;
+    padding-bottom: 2px;
+  }
+
+  body.thermal-print #notinha-print .text-xs {
+    font-size: 9px;
+  }
+}
+
+/* foco visível para acessibilidade */
+/* Destaca o elemento que recebeu foco pelo teclado. */
+:focus-visible {
+  outline: 2px solid #2F6F9F;
+  outline-offset: 2px;
+}
