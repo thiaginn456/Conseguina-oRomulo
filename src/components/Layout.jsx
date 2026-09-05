@@ -1,5 +1,7 @@
 // Importa links de navegação e o local onde a página filha será exibida.
 import { NavLink, Outlet } from 'react-router-dom'
+import Button from './Button.jsx'
+import { supabase } from '../lib/supabaseClient.js'
 
 // Monta as classes do menu conforme o link esteja ativo ou não.
 const navItem = ({ isActive }) =>
@@ -22,6 +24,9 @@ export default function Layout() {
           <nav aria-label="Navegação principal" className="flex items-center gap-2 w-full sm:w-auto">
             <NavLink to="/" end className={(props) => `${navItem(props)} flex-1 sm:flex-none text-center min-h-10`}>Clientes</NavLink>
             <NavLink to="/produtos" className={(props) => `${navItem(props)} flex-1 sm:flex-none text-center min-h-10`}>Estoque</NavLink>
+            <Button type="button" variant="ghost" className="min-h-10 whitespace-nowrap" onClick={() => supabase.auth.signOut()}>
+              Sair
+            </Button>
           </nav>
         </div>
       </header>

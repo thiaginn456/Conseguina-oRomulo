@@ -66,8 +66,7 @@ create index if not exists idx_consignments_client on consignments(client_id);
 create index if not exists idx_items_consignment on consignment_items(consignment_id);
 
 -- ------------------------------------------------------------
--- Habilitar acesso (modo de teste: liberado para a chave anon)
--- Ajuste as políticas depois se for usar autenticação de usuários.
+-- Habilitar acesso somente para usuários autenticados pelo Supabase Auth
 -- ------------------------------------------------------------
 alter table clients enable row level security;
 alter table products enable row level security;
@@ -75,16 +74,20 @@ alter table consignments enable row level security;
 alter table consignment_items enable row level security;
 
 drop policy if exists "allow all clients" on clients;
-create policy "allow all clients" on clients for all using (true) with check (true);
+drop policy if exists "authenticated clients" on clients;
+create policy "authenticated clients" on clients for all to authenticated using (true) with check (true);
 
 drop policy if exists "allow all products" on products;
-create policy "allow all products" on products for all using (true) with check (true);
+drop policy if exists "authenticated products" on products;
+create policy "authenticated products" on products for all to authenticated using (true) with check (true);
 
 drop policy if exists "allow all consignments" on consignments;
-create policy "allow all consignments" on consignments for all using (true) with check (true);
+drop policy if exists "authenticated consignments" on consignments;
+create policy "authenticated consignments" on consignments for all to authenticated using (true) with check (true);
 
 drop policy if exists "allow all consignment_items" on consignment_items;
-create policy "allow all consignment_items" on consignment_items for all using (true) with check (true);
+drop policy if exists "authenticated consignment_items" on consignment_items;
+create policy "authenticated consignment_items" on consignment_items for all to authenticated using (true) with check (true);
 
 -- ------------------------------------------------------------
 -- Dados de teste: estoque inicial de brinquedos

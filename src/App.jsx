@@ -1,4 +1,5 @@
 // Importa os componentes de roteamento do React Router.
+import { useEffect, useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 // Importa a estrutura compartilhada das páginas.
 import Layout from './components/Layout.jsx'
@@ -8,10 +9,40 @@ import ClientsPage from './pages/ClientsPage.jsx'
 import ClientDetailPage from './pages/ClientDetailPage.jsx'
 // Importa a página de estoque.
 import ProductsPage from './pages/ProductsPage.jsx'
-import { isSupabaseConfigured } from './lib/supabaseClient.js'
+import LoginPage from './pages/LoginPage.jsx'
+import { isSupabaseConfigured, supabase } from './lib/supabaseClient.js'
 
 // Define todas as rotas principais da aplicação.
 export default function App() {
+  const [session, setSession] = useState(null)
+  const [isLoadingSession, setIsLoadingSession] = useState(true)
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setIsLoadingSession(false)
+      return undefined
+    }
+
+    let isMounted = true
+
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      if (isMounted) {
+        setSession(currentSession)
+        setIsLoadingSession(false)
+      }
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSession(currentSession)
+      setIsLoadingSession(false)
+    })
+
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
+  }, [])
+
   if (!isSupabaseConfigured) {
     return (
       <main className="min-h-screen flex items-center justify-center px-5 text-center">
@@ -23,6 +54,18 @@ export default function App() {
         </div>
       </main>
     )
+  }
+
+  if (isLoadingSession) {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-5 text-wood-500">
+        Verificando sessão...
+      </main>
+    )
+  }
+
+  if (!session) {
+    return <LoginPage />
   }
 
   // Monta as rotas dentro do layout comum.
