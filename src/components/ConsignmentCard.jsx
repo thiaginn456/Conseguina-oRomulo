@@ -44,6 +44,7 @@ export default function ConsignmentCard({ consignment, items, onChanged, onClose
               <tr className="text-left text-xs text-wood-500 border-b border-wood-200">
                 <th className="pb-1">Brinquedo</th>
                 <th className="pb-1 text-center">Consig.</th>
+                <th className="pb-1 text-center">Sobrou</th>
                 <th className="pb-1 text-center">Vendido</th>
                 <th className="pb-1 text-right">Unit.</th>
               </tr>
@@ -53,6 +54,7 @@ export default function ConsignmentCard({ consignment, items, onChanged, onClose
                 <tr key={item.id} className="border-b border-wood-100 last:border-0">
                   <td className="py-1">{item.product_name_snapshot}</td>
                   <td className="py-1 text-center">{item.quantity_consigned}</td>
+                  <td className="py-1 text-center">{item.quantity_consigned - item.quantity_sold}</td>
                   <td className="py-1 text-center">{item.quantity_sold}</td>
                   <td className="py-1 text-right">
                     {item.unit_sale_price != null ? formatMoney(item.unit_sale_price) : '—'}
@@ -66,7 +68,8 @@ export default function ConsignmentCard({ consignment, items, onChanged, onClose
           {!isActive && (
             <div className="flex flex-wrap justify-between items-center gap-2 text-sm bg-wood-50 rounded-xl p-3">
               <span>Total: <strong>{formatMoney(consignment.total_amount)}</strong></span>
-              <span className="text-leaf-600">Lucro: <strong>{formatMoney(consignment.profit_amount)}</strong></span>
+              <span className="text-wood-700">Vendedor ({Number(consignment.seller_percentage || 0)}%): <strong>{formatMoney(consignment.seller_profit_amount)}</strong></span>
+              <span className="text-leaf-600">Consignador: <strong>{formatMoney(consignment.profit_amount)}</strong></span>
               <span className={consignment.payment_status === 'pago' ? 'text-leaf-600' : 'text-candy-600'}>
                 {consignment.payment_status === 'pago' && 'Pago'}
                 {consignment.payment_status === 'fiado' && 'Fiado (em aberto)'}

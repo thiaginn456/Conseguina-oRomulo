@@ -15,9 +15,12 @@ export default function CloseConsignmentForm({ consignment, items, onClosed, onC
     items.map((item) => ({
       ...item,
       quantity_sold: item.quantity_sold || 0,
-      unit_sale_price: item.unit_sale_price ?? item.base_price_snapshot,
+      quantity_remaining: Math.max(0, item.quantity_consigned - (item.quantity_sold || 0)),
+      unit_sale_price: item.base_price_snapshot,
     }))
   )
+  // Guarda a porcentagem do valor da venda que pertence ao vendedor.
+  const [sellerPercentage, setSellerPercentage] = useState(consignment.seller_percentage ?? '')
   // Guarda a opção de pagamento escolhida pelo usuário.
   const [paymentStatus, setPaymentStatus] = useState('pago')
   // Guarda o valor digitado quando o pagamento é parcial.
@@ -34,26 +37,29 @@ export default function CloseConsignmentForm({ consignment, items, onClosed, onC
 
   // Recalcula os valores derivados sempre que alguma linha é alterada.
   const totals = useMemo(() => {
-    // Inicializa o total cobrado, o lucro e a quantidade vendida.
+    // Inicializa os totais financeiros e as quantidades do fechamento.
     let totalAmount = 0
-    let profitAmount = 0
+    let sellerProfitAmount = 0
     let totalSold = 0
+    let totalRemaining = 0
     // Percorre cada produto informado no fechamento.
     for (const row of rows) {
-      // Converte a quantidade para número e usa zero quando o campo está vazio.
-      const qty = Number(row.quantity_sold) || 0
-      // Converte o preço de venda para número e usa zero quando necessário.
-      const price = Number(row.unit_sale_price) || 0
+      // A sobra é informada; o vendido é o consignado menos a sobra.
+      const remaining = Number(row.quantity_remaining) || 0
+      const qty = Number(row.quantity_consigned) - remaining
+      // O preço cadastrado é fixo para a venda.
+      const price = Number(row.base_price_snapshot) || 0
       // Soma o faturamento deste produto ao total da consignação.
       totalAmount += qty * price
-      // O lucro é a diferença entre o preço de venda e o preço-base.
-      profitAmount += qty * (price - Number(row.base_price_snapshot))
-      // Soma a quantidade vendida para exibir o resumo.
+      // Soma as quantidades derivadas para exibir o resumo.
       totalSold += qty
+      totalRemaining += remaining
     }
+    sellerProfitAmount = totalAmount * ((Number(sellerPercentage) || 0) / 100)
+    const ownerProfitAmount = totalAmount - sellerProfitAmount
     // Retorna todos os valores calculados para o formulário.
-    return { totalAmount, profitAmount, totalSold }
-  }, [rows])
+    return { totalAmount, sellerProfitAmount, ownerProfitAmount, totalSold, totalRemaining }
+  }, [rows, sellerPercentage])
 
   // Valida os dados e grava o fechamento da consignação.
   async function handleSubmit(e) {
@@ -62,17 +68,22 @@ export default function CloseConsignmentForm({ consignment, items, onClosed, onC
     // Limpa um erro anterior antes de começar uma nova tentativa.
     setError('')
 
-    // Verifica se alguma quantidade vendida ultrapassa o que foi consignado.
+    // Verifica se alguma quantidade restante ultrapassa o que foi consignado.
     for (const row of rows) {
-      const qty = Number(row.quantity_sold) || 0
-      if (qty > row.quantity_consigned) {
-        setError(`"${row.product_name_snapshot}": quantidade vendida não pode passar da consignada (${row.quantity_consigned}).`)
+      const remaining = Number(row.quantity_remaining) || 0
+      if (remaining > row.quantity_consigned) {
+        setError(`"${row.product_name_snapshot}": quantidade que sobrou não pode passar da consignada (${row.quantity_consigned}).`)
         return
       }
-      if (qty < 0) {
-        setError('Quantidade vendida não pode ser negativa.')
+      if (remaining < 0) {
+        setError('Quantidade que sobrou não pode ser negativa.')
         return
       }
+    }
+    const percentage = Number(sellerPercentage) || 0
+    if (percentage < 0 || percentage > 100) {
+      setError('A porcentagem do vendedor deve estar entre 0% e 100%.')
+      return
     }
 
     // Define quanto foi pago de acordo com a situação escolhida.
@@ -95,8 +106,8 @@ export default function CloseConsignmentForm({ consignment, items, onClosed, onC
       const { error: itemError } = await supabase
         .from('consignment_items')
         .update({
-          quantity_sold: Number(row.quantity_sold) || 0,
-          unit_sale_price: Number(row.unit_sale_price) || 0,
+          quantity_sold: Number(row.quantity_consigned) - (Number(row.quantity_remaining) || 0),
+          unit_sale_price: Number(row.base_price_snapshot) || 0,
         })
         .eq('id', row.id)
       if (itemError) {
@@ -106,7 +117,7 @@ export default function CloseConsignmentForm({ consignment, items, onClosed, onC
       }
 
       // Devolve ao estoque geral as unidades que não foram vendidas.
-      const unsold = row.quantity_consigned - (Number(row.quantity_sold) || 0)
+      const unsold = Number(row.quantity_remaining) || 0
       if (unsold > 0) {
         const { data: product } = await supabase
           .from('products')
@@ -130,7 +141,9 @@ export default function CloseConsignmentForm({ consignment, items, onClosed, onC
       .update({
         status: 'finalizado',
         total_amount: totals.totalAmount,
-        profit_amount: totals.profitAmount,
+        profit_amount: totals.ownerProfitAmount,
+        seller_percentage: percentage,
+        seller_profit_amount: totals.sellerProfitAmount,
         payment_status: paymentStatus,
         amount_paid: amountPaid,
         closed_at: closedAt,
@@ -146,8 +159,9 @@ export default function CloseConsignmentForm({ consignment, items, onClosed, onC
     // Normaliza os valores das linhas antes de enviá-los ao componente pai.
     const updatedItems = rows.map((row) => ({
       ...row,
-      quantity_sold: Number(row.quantity_sold) || 0,
-      unit_sale_price: Number(row.unit_sale_price) || 0,
+      quantity_sold: Number(row.quantity_consigned) - (Number(row.quantity_remaining) || 0),
+      quantity_remaining: Number(row.quantity_remaining) || 0,
+      unit_sale_price: Number(row.base_price_snapshot) || 0,
     }))
 
     onClosed(updatedConsignment, updatedItems)
@@ -161,37 +175,49 @@ export default function CloseConsignmentForm({ consignment, items, onClosed, onC
       <div className="space-y-3">
         {rows.map((row, i) => (
           <div key={row.id} className="rounded-xl border border-wood-200 p-3">
-            <p className="font-600 text-wood-900 text-sm mb-2">
+              <p className="font-600 text-wood-900 text-sm mb-2">
               {row.product_name_snapshot} <span className="text-wood-400 font-400">• {row.quantity_consigned} consignados</span>
             </p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-600 text-wood-500 mb-1">Quantidade vendida</label>
+                <label className="block text-xs font-600 text-wood-500 mb-1">Quantidade que sobrou</label>
                 <input
                   type="text" inputMode="numeric" min="0" max={row.quantity_consigned}
                   className="w-full rounded-lg border border-wood-200 px-3 py-1.5 text-sm focus:border-sky-500"
-                  value={row.quantity_sold}
-                  onChange={(e) => updateRow(i, 'quantity_sold', e.target.value.replace(/\D/g, ''))}
+                  value={row.quantity_remaining}
+                  onChange={(e) => updateRow(i, 'quantity_remaining', e.target.value.replace(/\D/g, ''))}
                 />
               </div>
               <div>
-                <label className="block text-xs font-600 text-wood-500 mb-1">Preço de venda (unit.)</label>
-                <input
-                  type="text" inputMode="decimal" min="0" step="0.01"
-                  className="w-full rounded-lg border border-wood-200 px-3 py-1.5 text-sm focus:border-sky-500"
-                  value={row.unit_sale_price}
-                  onChange={(e) => updateRow(i, 'unit_sale_price', e.target.value.replace(',', '.').replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1'))}
-                />
+                <label className="block text-xs font-600 text-wood-500 mb-1">Preço fixo (unit.)</label>
+                <div className="w-full rounded-lg border border-wood-100 bg-wood-50 px-3 py-1.5 text-sm text-wood-600">
+                  {formatMoney(row.base_price_snapshot)}
+                </div>
               </div>
             </div>
           </div>
         ))}
       </div>
 
+      <div>
+        <label className="block text-xs font-600 text-wood-500 mb-1">Porcentagem do vendedor</label>
+        <div className="flex items-center gap-2">
+          <input
+            type="text" inputMode="decimal" min="0" max="100" step="0.01"
+            className="w-full rounded-lg border border-wood-200 px-3 py-1.5 text-sm focus:border-sky-500"
+            value={sellerPercentage}
+            onChange={(e) => setSellerPercentage(e.target.value.replace(',', '.').replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1'))}
+          />
+          <span className="text-sm text-wood-500">%</span>
+        </div>
+      </div>
+
       <div className="rounded-xl bg-wood-50 border border-wood-200 p-4 space-y-1 text-sm">
+        <div className="flex justify-between"><span>Total que sobrou</span><span>{totals.totalRemaining}</span></div>
         <div className="flex justify-between"><span>Total vendido (itens)</span><span>{totals.totalSold}</span></div>
         <div className="flex justify-between font-700 text-wood-900"><span>Valor a receber</span><span>{formatMoney(totals.totalAmount)}</span></div>
-        <div className="flex justify-between text-leaf-600 font-600"><span>Lucro</span><span>{formatMoney(totals.profitAmount)}</span></div>
+        <div className="flex justify-between text-wood-700 font-600"><span>Lucro do vendedor</span><span>{formatMoney(totals.sellerProfitAmount)}</span></div>
+        <div className="flex justify-between text-leaf-600 font-600"><span>Lucro do consignador</span><span>{formatMoney(totals.ownerProfitAmount)}</span></div>
       </div>
 
       <div>

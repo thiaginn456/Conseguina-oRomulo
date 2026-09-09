@@ -43,6 +43,8 @@ create table if not exists consignments (
   amount_paid numeric(10,2) not null default 0,
   total_amount numeric(10,2) not null default 0,
   profit_amount numeric(10,2) not null default 0,
+  seller_percentage numeric(5,2) not null default 0,
+  seller_profit_amount numeric(10,2) not null default 0,
   closed_at timestamptz,
   created_at timestamptz not null default now()
 );
@@ -64,6 +66,10 @@ create table if not exists consignment_items (
 
 create index if not exists idx_consignments_client on consignments(client_id);
 create index if not exists idx_items_consignment on consignment_items(consignment_id);
+
+-- Colunas adicionadas para instalações que já possuem as tabelas criadas
+alter table consignments add column if not exists seller_percentage numeric(5,2) not null default 0;
+alter table consignments add column if not exists seller_profit_amount numeric(10,2) not null default 0;
 
 -- ------------------------------------------------------------
 -- Habilitar acesso somente para usuários autenticados pelo Supabase Auth

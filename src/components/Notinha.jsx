@@ -7,10 +7,10 @@ import Button from './Button.jsx'
 export default function Notinha({ client, consignment, items, onClose }) {
   // Soma a quantidade enviada para o resumo do comprovante.
   const totalConsigned = items.reduce((sum, i) => sum + i.quantity_consigned, 0)
-  // Soma a quantidade efetivamente vendida.
+  // Soma as quantidades efetivamente vendidas e as que sobraram.
   const totalSold = items.reduce((sum, i) => sum + i.quantity_sold, 0)
-  // Calcula o valor correspondente ao vendedor: venda menos lucro.
-  const sellerAmount = Number(consignment.total_amount || 0) - Number(consignment.profit_amount || 0)
+  const totalRemaining = totalConsigned - totalSold
+  const sellerProfitAmount = Number(consignment.seller_profit_amount || 0)
 
   // Ativa temporariamente o layout específico da impressora térmica.
   function printThermal() {
@@ -40,6 +40,7 @@ export default function Notinha({ client, consignment, items, onClose }) {
               <tr className="text-left text-xs text-wood-500 border-b border-wood-200">
                 <th className="pb-1">Brinquedo</th>
                 <th className="pb-1 text-center">Consig.</th>
+                <th className="pb-1 text-center">Sobrou</th>
                 <th className="pb-1 text-center">Vendido</th>
                 <th className="pb-1 text-right">Unit.</th>
                 <th className="pb-1 text-right">Subtotal</th>
@@ -50,6 +51,7 @@ export default function Notinha({ client, consignment, items, onClose }) {
                 <tr key={item.id} className="border-b border-wood-100 last:border-0">
                   <td className="py-1 pr-1">{item.product_name_snapshot}</td>
                   <td className="py-1 text-center">{item.quantity_consigned}</td>
+                  <td className="py-1 text-center">{item.quantity_consigned - item.quantity_sold}</td>
                   <td className="py-1 text-center">{item.quantity_sold}</td>
                   <td className="py-1 text-right">{formatMoney(item.unit_sale_price)}</td>
                   <td className="py-1 text-right">{formatMoney((item.unit_sale_price || 0) * item.quantity_sold)}</td>
@@ -64,6 +66,10 @@ export default function Notinha({ client, consignment, items, onClose }) {
               <span>{totalConsigned}</span>
             </div>
             <div className="flex justify-between text-wood-500">
+              <span>Itens que sobraram</span>
+              <span>{totalRemaining}</span>
+            </div>
+            <div className="flex justify-between text-wood-500">
               <span>Itens vendidos</span>
               <span>{totalSold}</span>
             </div>
@@ -72,15 +78,15 @@ export default function Notinha({ client, consignment, items, onClose }) {
               <span>{formatMoney(consignment.total_amount)}</span>
             </div>
             <div className="flex justify-between text-wood-700 font-600">
-              <span>Valor do vendedor</span>
-              <span>{formatMoney(sellerAmount)}</span>
+              <span>Lucro do vendedor ({Number(consignment.seller_percentage || 0)}%)</span>
+              <span>{formatMoney(sellerProfitAmount)}</span>
             </div>
             <div className="flex justify-between text-wood-500">
               <span>Pago até agora</span>
               <span>{formatMoney(consignment.amount_paid)}</span>
             </div>
             <div className="flex justify-between text-leaf-600 font-600">
-              <span>Lucro</span>
+              <span>Lucro do consignador</span>
               <span>{formatMoney(consignment.profit_amount)}</span>
             </div>
             <div className="flex justify-between text-wood-500 pt-1">
