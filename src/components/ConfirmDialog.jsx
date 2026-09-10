@@ -2,7 +2,7 @@
 import Button from './Button.jsx'
 
 // Exibe uma confirmação visual antes de uma exclusão.
-export default function ConfirmDialog({ title, message, onCancel, onConfirm, saving }) {
+export default function ConfirmDialog({ title, message, onCancel, onConfirm, saving, confirmLabel = 'Apagar', savingLabel = 'Apagando...' }) {
   // Renderiza a camada sobreposta e o conteúdo da confirmação.
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 px-4" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title">
@@ -12,7 +12,7 @@ export default function ConfirmDialog({ title, message, onCancel, onConfirm, sav
         <div className="mt-5 flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onCancel} disabled={saving}>Cancelar</Button>
           <Button type="button" variant="danger" onClick={onConfirm} disabled={saving}>
-            {saving ? 'Apagando...' : 'Apagar'}
+            {saving ? savingLabel : confirmLabel}
           </Button>
         </div>
       </div>

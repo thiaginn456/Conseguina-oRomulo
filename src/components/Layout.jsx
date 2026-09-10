@@ -1,6 +1,8 @@
 // Importa links de navegação e o local onde a página filha será exibida.
+import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import Button from './Button.jsx'
+import ConfirmDialog from './ConfirmDialog.jsx'
 import { supabase } from '../lib/supabaseClient.js'
 
 // Monta as classes do menu conforme o link esteja ativo ou não.
@@ -13,6 +15,14 @@ const navItem = ({ isActive }) =>
 
 // Define a moldura comum usada por todas as páginas.
 export default function Layout() {
+  const [showSignOutConfirmation, setShowSignOutConfirmation] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
+
+  async function handleSignOut() {
+    setIsSigningOut(true)
+    await supabase.auth.signOut()
+  }
+
   // Renderiza cabeçalho, conteúdo da rota atual e rodapé.
   return (
     <div className="min-h-screen flex flex-col">
@@ -24,7 +34,7 @@ export default function Layout() {
           <nav aria-label="Navegação principal" className="flex items-center gap-2 w-full sm:w-auto">
             <NavLink to="/" end className={(props) => `${navItem(props)} flex-1 sm:flex-none text-center min-h-10`}>Clientes</NavLink>
             <NavLink to="/produtos" className={(props) => `${navItem(props)} flex-1 sm:flex-none text-center min-h-10`}>Estoque</NavLink>
-            <Button type="button" variant="ghost" className="min-h-10 whitespace-nowrap" onClick={() => supabase.auth.signOut()}>
+            <Button type="button" variant="ghost" className="min-h-10 whitespace-nowrap" onClick={() => setShowSignOutConfirmation(true)}>
               Sair
             </Button>
           </nav>
@@ -36,6 +46,17 @@ export default function Layout() {
       <footer className="no-print text-center text-xs text-wood-400 py-6">
         Feito para controlar consignação de brinquedos • dados salvos no Supabase
       </footer>
+      {showSignOutConfirmation && (
+        <ConfirmDialog
+          title="Sair"
+          message="Deseja sair?"
+          onCancel={() => setShowSignOutConfirmation(false)}
+          onConfirm={handleSignOut}
+          saving={isSigningOut}
+          confirmLabel="Sair"
+          savingLabel="Saindo..."
+        />
+      )}
     </div>
   )
 }
