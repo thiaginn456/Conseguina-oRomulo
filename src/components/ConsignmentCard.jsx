@@ -6,12 +6,14 @@ import { formatDate, formatMoney } from '../lib/format.js'
 import Card from './Card.jsx'
 import Button from './Button.jsx'
 import CloseConsignmentForm from './CloseConsignmentForm.jsx'
+import EditConsignmentForm from './EditConsignmentForm.jsx'
 
 // Exibe uma consignação e permite consultar ou fechar seus itens.
-export default function ConsignmentCard({ consignment, items, onChanged, onClosedSuccessfully, onViewNotinha, onPreviewNotinha }) {
+export default function ConsignmentCard({ consignment, items, onChanged, onClosedSuccessfully, onViewNotinha, onPreviewNotinha, products = [] }) {
   // Mantém o cartão aberto para consignações ativas.
   const [expanded, setExpanded] = useState(consignment.status === 'ativo')
   const [closing, setClosing] = useState(false)
+  const [editing, setEditing] = useState(false)
 
   const totalConsigned = items.reduce((s, i) => s + i.quantity_consigned, 0)
   const isActive = consignment.status === 'ativo'
@@ -78,12 +80,25 @@ export default function ConsignmentCard({ consignment, items, onChanged, onClose
             </div>
           )}
 
-          {isActive && !closing && (
-            <div className="flex justify-end">
+          {isActive && !closing && !editing && (
+            <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
+              <Button className="w-full sm:w-auto" variant="secondary" onClick={() => setEditing(true)}>
+                Editar consignação
+              </Button>
               <Button className="w-full sm:w-auto" variant="success" onClick={() => setClosing(true)}>
                 Registrar vendas / Fechar
               </Button>
             </div>
+          )}
+
+          {isActive && editing && (
+            <EditConsignmentForm
+              consignment={consignment}
+              items={items}
+              products={products}
+              onCancel={() => setEditing(false)}
+              onSaved={() => { setEditing(false); onChanged() }}
+            />
           )}
 
           {isActive && closing && (

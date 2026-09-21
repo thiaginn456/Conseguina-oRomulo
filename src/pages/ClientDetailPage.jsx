@@ -113,6 +113,7 @@ export default function ClientDetailPage() {
               onChanged={loadAll}
               onClosedSuccessfully={(consignment, items) => setNotinhaData({ consignment, items })}
               onViewNotinha={(consignment, items) => setNotinhaData({ consignment, items })}
+              products={products}
               onPreviewNotinha={(consignment, items) => setNotinhaData({ consignment, items, draft: true })}
             />
           ))}
