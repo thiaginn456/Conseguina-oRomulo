@@ -4,7 +4,7 @@ import { formatMoney, formatDate } from '../lib/format.js'
 import Button from './Button.jsx'
 
 // Exibe o comprovante e oferece impressão normal ou térmica.
-export default function Notinha({ client, consignment, items, onClose }) {
+export default function Notinha({ client, consignment, items, draft = false, onClose }) {
   // Soma a quantidade enviada para o resumo do comprovante.
   const totalConsigned = items.reduce((sum, i) => sum + i.quantity_consigned, 0)
   // Soma as quantidades efetivamente vendidas e as que sobraram.
@@ -26,7 +26,8 @@ export default function Notinha({ client, consignment, items, onClose }) {
         <div id="notinha-print" className="p-6">
           <div className="text-center mb-4">
             <h2 className="font-display font-700 text-lg text-wood-900">Comprovante de Consignação</h2>
-            <p className="text-xs text-wood-400">{formatDate(consignment.closed_at || consignment.sent_date)}</p>
+            {draft && <p className="text-xs font-600 text-wood-600">PRÉVIA — consignação em andamento</p>}
+            <p className="text-xs text-wood-400">{formatDate(consignment.closed_at || (draft ? new Date().toISOString() : consignment.sent_date))}</p>
           </div>
 
           <div className="text-sm text-wood-700 border-t border-b border-dashed border-wood-300 py-3 mb-3 space-y-0.5">

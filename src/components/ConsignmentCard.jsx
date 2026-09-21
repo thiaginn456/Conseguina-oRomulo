@@ -8,7 +8,7 @@ import Button from './Button.jsx'
 import CloseConsignmentForm from './CloseConsignmentForm.jsx'
 
 // Exibe uma consignação e permite consultar ou fechar seus itens.
-export default function ConsignmentCard({ consignment, items, onChanged, onClosedSuccessfully, onViewNotinha }) {
+export default function ConsignmentCard({ consignment, items, onChanged, onClosedSuccessfully, onViewNotinha, onPreviewNotinha }) {
   // Mantém o cartão aberto para consignações ativas.
   const [expanded, setExpanded] = useState(consignment.status === 'ativo')
   const [closing, setClosing] = useState(false)
@@ -91,6 +91,7 @@ export default function ConsignmentCard({ consignment, items, onChanged, onClose
               consignment={consignment}
               items={items}
               onCancel={() => setClosing(false)}
+              onPreview={(draft, draftItems) => onPreviewNotinha(draft, draftItems)}
               onClosed={(updatedConsignment, updatedItems) => {
                 setClosing(false)
                 onChanged()

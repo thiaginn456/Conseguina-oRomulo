@@ -8,7 +8,7 @@ import { formatMoney } from '../lib/format.js'
 import Button from './Button.jsx'
 
 // Exibe o formulário usado para registrar as vendas e finalizar uma consignação.
-export default function CloseConsignmentForm({ consignment, items, onClosed, onCancel }) {
+export default function CloseConsignmentForm({ consignment, items, onClosed, onCancel, onPreview }) {
   // Cria uma cópia editável dos itens recebidos pelo componente.
   const [rows, setRows] = useState(
     // Mantém os dados originais e define valores iniciais para venda e preço.
@@ -60,6 +60,31 @@ export default function CloseConsignmentForm({ consignment, items, onClosed, onC
     // Retorna todos os valores calculados para o formulário.
     return { totalAmount, sellerProfitAmount, ownerProfitAmount, totalSold, totalRemaining }
   }, [rows, sellerPercentage])
+
+  // Abre a notinha com os valores atuais do formulário, sem fechar a consignação.
+  function handlePreview() {
+    const percentage = Number(sellerPercentage) || 0
+    let amountPaid = 0
+    if (paymentStatus === 'pago') amountPaid = totals.totalAmount
+    else if (paymentStatus === 'parcial') amountPaid = Number(amountPaidInput) || 0
+
+    const draftItems = rows.map((row) => ({
+      ...row,
+      quantity_sold: Number(row.quantity_consigned) - (Number(row.quantity_remaining) || 0),
+      unit_sale_price: Number(row.base_price_snapshot) || 0,
+    }))
+    const draftConsignment = {
+      ...consignment,
+      total_amount: totals.totalAmount,
+      profit_amount: totals.ownerProfitAmount,
+      seller_percentage: percentage,
+      seller_profit_amount: totals.sellerProfitAmount,
+      payment_status: paymentStatus,
+      amount_paid: amountPaid,
+      closed_at: null,
+    }
+    onPreview(draftConsignment, draftItems)
+  }
 
   // Valida os dados e grava o fechamento da consignação.
   async function handleSubmit(e) {
@@ -255,6 +280,9 @@ export default function CloseConsignmentForm({ consignment, items, onClosed, onC
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onCancel}>Cancelar</Button>
+        {onPreview && (
+          <Button type="button" variant="secondary" onClick={handlePreview}>Imprimir notinha</Button>
+        )}
         <Button type="submit" variant="success" disabled={saving}>
           {saving ? 'Salvando...' : 'Fechar consignação e gerar notinha'}
         </Button>

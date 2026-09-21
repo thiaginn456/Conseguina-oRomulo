@@ -113,6 +113,7 @@ export default function ClientDetailPage() {
               onChanged={loadAll}
               onClosedSuccessfully={(consignment, items) => setNotinhaData({ consignment, items })}
               onViewNotinha={(consignment, items) => setNotinhaData({ consignment, items })}
+              onPreviewNotinha={(consignment, items) => setNotinhaData({ consignment, items, draft: true })}
             />
           ))}
         </div>
@@ -142,6 +143,7 @@ export default function ClientDetailPage() {
           client={client}
           consignment={notinhaData.consignment}
           items={notinhaData.items}
+          draft={notinhaData.draft}
           onClose={() => setNotinhaData(null)}
         />
       )}
