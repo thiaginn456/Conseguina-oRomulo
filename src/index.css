@@ -28,17 +28,68 @@ h1, h2, h3, h4, .font-display {
   @page {
     margin: 8mm;
   }
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+  }
   body * {
     visibility: hidden;
   }
   #notinha-print, #notinha-print * {
     visibility: visible;
   }
+  .no-print-bg {
+    position: static !important;
+    display: block !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+  .no-print-bg > div {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
   #notinha-print {
-    position: absolute;
-    top: 0;
-    left: 0;
+    position: static;
     width: 100%;
+    padding: 0 !important;
+  }
+  #notinha-print table {
+    width: 100%;
+    table-layout: fixed;
+  }
+  #notinha-print th:nth-child(1),
+  #notinha-print td:nth-child(1) {
+    width: 34%;
+  }
+  #notinha-print th:nth-child(2),
+  #notinha-print td:nth-child(2),
+  #notinha-print th:nth-child(3),
+  #notinha-print td:nth-child(3),
+  #notinha-print th:nth-child(4),
+  #notinha-print td:nth-child(4) {
+    width: 9%;
+  }
+  #notinha-print th:nth-child(5),
+  #notinha-print td:nth-child(5) {
+    width: 17%;
+  }
+  #notinha-print th:nth-child(6),
+  #notinha-print td:nth-child(6) {
+    width: 22%;
+  }
+  #notinha-print th,
+  #notinha-print td {
+    overflow-wrap: anywhere;
+  }
+  #notinha-print thead {
+    display: table-header-group;
+  }
+  #notinha-print tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
   .no-print {
     display: none !important;
